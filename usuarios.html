@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuários — RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #101010; --bg2: #100f08; --bg3: #110e07;
+    --border: #302808; --border2: #604808;
+    --gold: #c9a84c; --gold2: #352810; --gold-dim: #dba844;
+    --text: #ffffff; --text2: #806019; --text3: #ffffff;
+    --red: #8b5020; --red2: #c07040; --radius: 6px;
+  }
+  body { font-family: 'Crimson Text', Georgia, serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+  input {
+    font-family: 'Crimson Text', Georgia, serif; font-size: 15px; color: var(--text);
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 12px; width: 100%; transition: border-color 0.2s;
+  }
+  input:focus { outline: none; border-color: var(--gold-dim); background: var(--bg3); }
+  input[type="password"] { letter-spacing: 2px; }
+  button {
+    font-family: 'Crimson Text', Georgia, serif; cursor: pointer; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: transparent; color: var(--text2);
+    padding: 7px 14px; font-size: 14px; transition: all 0.18s;
+  }
+  button:hover { background: var(--bg3); color: var(--gold2); border-color: var(--gold-dim); }
+  button:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--bg3); border-color: var(--gold-dim); color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: #201808; color: var(--gold2); border-color: var(--gold); }
+  .btn-icon { padding: 5px 9px; font-size: 15px; min-width: 30px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-danger { color: var(--red2); border-color: transparent; }
+  .btn-danger:hover { background: rgba(139,80,32,0.15); border-color: var(--red); color: #e09060; }
+  .btn-logout { background: transparent; border-color: var(--border); color: var(--text3); font-size: 12px; padding: 5px 10px; }
+  .btn-logout:hover { color: var(--red2); border-color: var(--red); background: rgba(139,80,32,0.1); }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+    gap: 10px; flex-wrap: wrap;
+  }
+  .page-title { font-family: 'Cinzel', serif; font-size: 20px; color: var(--gold); letter-spacing: 1px; }
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 18px 0 12px; color: var(--gold-dim);
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.8px;
+  }
+  .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .add-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 16px; }
+  .add-form-title { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold-dim); letter-spacing: 0.6px; margin-bottom: 10px; }
+  .form-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .form-row .field-group { flex: 1; min-width: 120px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; }
+  .user-list { display: flex; flex-direction: column; gap: 8px; }
+  .user-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); transition: border-color 0.2s; gap: 10px; flex-wrap: wrap;
+  }
+  .user-item:hover { border-color: var(--border2); }
+  .user-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .user-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--bg3);
+    border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold-dim); flex-shrink: 0;
+  }
+  .user-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .user-pass { font-size: 13px; color: var(--text3); margin-top: 1px; font-style: italic; }
+  .user-actions { display: flex; gap: 6px; align-items: center; }
+  .edit-row { display: none; width: 100%; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .edit-row.open { display: flex; }
+  .edit-row input { flex: 1; min-width: 120px; padding: 5px 8px; font-size: 13px; }
+  .mestre-badge {
+    font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold);
+    border: 1px solid var(--border2); padding: 2px 8px; border-radius: 4px;
+    background: var(--bg3); letter-spacing: 0.5px;
+  }
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--bg3);
+    border: 1px solid var(--gold-dim); color: var(--gold); font-family: 'Cinzel', serif;
+    font-size: 13px; letter-spacing: 0.5px; padding: 10px 18px; border-radius: var(--radius);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999;
+  }
+  .loading { text-align: center; padding: 2rem; color: var(--gold-dim); font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 1px; }
+  .empty { text-align: center; padding: 1.5rem; color: var(--text3); font-style: italic; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="page-header">
+    <div class="page-title">⚙ Usuários</div>
+    <button class="btn-logout" onclick="window.location.href='index.html'">← Voltar</button>
+  </div>
+
+  <!-- Mestre -->
+  <div class="section-divider">Mestre</div>
+  <div class="user-list" id="mestreList"><div class="loading">Carregando...</div></div>
+
+  <!-- Jogadores -->
+  <div class="section-divider">Jogadores</div>
+  <div class="add-form">
+    <div class="add-form-title">Adicionar Jogador</div>
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">Usuário</label>
+        <input type="text" id="novoUsuario" placeholder="nome" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Senha</label>
+        <input type="text" id="novaSenha" placeholder="senha" autocomplete="off">
+      </div>
+      <button class="btn-primary" onclick="adicionarJogador()" style="flex-shrink:0;margin-top:18px">+ Adicionar</button>
+    </div>
+  </div>
+  <div class="user-list" id="jogadoresList"><div class="loading">Carregando...</div></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEiRmGP4wGrfDwbbIadvrt1Ik56ecbKYk",
+  authDomain: "path-of-stars.firebaseapp.com",
+  databaseURL: "https://path-of-stars-default-rtdb.firebaseio.com",
+  projectId: "path-of-stars",
+  storageBucket: "path-of-stars.firebasestorage.app",
+  messagingSenderId: "565088659888",
+  appId: "1:565088659888:web:8ee544001aee376e9f0e75"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const logado = sessionStorage.getItem("logado");
+const tipo   = sessionStorage.getItem("tipo");
+if (!logado) window.location.href = "login.html";
+if (tipo !== "mestre") window.location.href = "index.html";
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+// ── MESTRE ──
+function renderMestre(m) {
+  document.getElementById('mestreList').innerHTML = `
+    <div class="user-item" style="flex-wrap:wrap">
+      <div class="user-item-left">
+        <div class="user-avatar">M</div>
+        <div>
+          <div class="user-name">${esc(m.usuario)}</div>
+          <div class="user-pass" id="mSenhaLabel">Senha: ${'•'.repeat(m.senha.length)}</div>
+        </div>
+      </div>
+      <div class="user-actions">
+        <span class="mestre-badge">Mestre</span>
+        <button class="btn-icon" onclick="abrirEditMestre()" title="Trocar senha">✏️</button>
+      </div>
+      <div class="edit-row" id="mEditRow">
+        <input type="text" id="mSenhaAtual" placeholder="Senha atual">
+        <input type="text" id="mSenhaNova" placeholder="Nova senha">
+        <button class="btn-primary" onclick="salvarSenhaMestre()">✓ Salvar</button>
+        <button onclick="fecharEditMestre()">✗</button>
+      </div>
+    </div>`;
+}
+
+window.abrirEditMestre = () => {
+  document.getElementById('mEditRow').classList.add('open');
+  document.getElementById('mSenhaAtual').focus();
+};
+window.fecharEditMestre = () => {
+  document.getElementById('mEditRow').classList.remove('open');
+  document.getElementById('mSenhaAtual').value = '';
+  document.getElementById('mSenhaNova').value = '';
+};
+window.salvarSenhaMestre = async () => {
+  const atual = document.getElementById('mSenhaAtual').value.trim();
+  const nova  = document.getElementById('mSenhaNova').value.trim();
+  if (!atual || !nova) { showToast('Preencha os dois campos!'); return; }
+  const snap = await get(ref(db, 'usuarios/mestre'));
+  if (!snap.exists() || snap.val().senha !== atual) {
+    showToast('Senha atual incorreta!'); return;
+  }
+  await set(ref(db, 'usuarios/mestre/senha'), nova);
+  showToast('Senha do mestre atualizada!');
+  fecharEditMestre();
+};
+
+// ── JOGADORES ──
+function renderJogadores(jogadores) {
+  const list = document.getElementById('jogadoresList');
+  const arr = Object.entries(jogadores || {});
+  if (!arr.length) {
+    list.innerHTML = '<div class="empty">Nenhum jogador cadastrado.</div>';
+    return;
+  }
+  list.innerHTML = arr.map(([key, j]) => {
+    const initials = (j.usuario||'?')[0].toUpperCase();
+    return `<div class="user-item" style="flex-wrap:wrap">
+      <div class="user-item-left">
+        <div class="user-avatar">${initials}</div>
+        <div>
+          <div class="user-name">${esc(j.usuario)}</div>
+          <div class="user-pass" id="pLabel_${key}">Senha: ${'•'.repeat(j.senha.length)}</div>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-icon" onclick="abrirEditJogador('${key}')" title="Trocar senha">✏️</button>
+        <button class="btn-icon btn-danger" onclick="removerJogador('${key}','${esc(j.usuario)}')" title="Remover">🗑</button>
+      </div>
+      <div class="edit-row" id="pEditRow_${key}">
+        <input type="text" id="pSenhaNova_${key}" placeholder="Nova senha">
+        <button class="btn-primary" onclick="salvarSenhaJogador('${key}')">✓ Salvar</button>
+        <button onclick="fecharEditJogador('${key}')">✗</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.abrirEditJogador = key => {
+  document.getElementById('pEditRow_' + key).classList.add('open');
+  document.getElementById('pSenhaNova_' + key).focus();
+};
+window.fecharEditJogador = key => {
+  document.getElementById('pEditRow_' + key).classList.remove('open');
+  document.getElementById('pSenhaNova_' + key).value = '';
+};
+window.salvarSenhaJogador = async key => {
+  const nova = document.getElementById('pSenhaNova_' + key).value.trim();
+  if (!nova) { showToast('Senha não pode ser vazia!'); return; }
+  await set(ref(db, 'usuarios/jogadores/' + key + '/senha'), nova);
+  showToast('Senha atualizada!');
+};
+window.removerJogador = async (key, nome) => {
+  if (!confirm(`Remover jogador "${nome}"?`)) return;
+  await remove(ref(db, 'usuarios/jogadores/' + key));
+  showToast('Jogador removido!');
+};
+
+window.adicionarJogador = async () => {
+  const usuario = document.getElementById('novoUsuario').value.toLowerCase().trim();
+  const senha   = document.getElementById('novaSenha').value.trim();
+  if (!usuario || !senha) { showToast('Preencha usuário e senha!'); return; }
+
+  const snap = await get(ref(db, 'usuarios/jogadores'));
+  const jogadores = snap.exists() ? snap.val() : {};
+  const jaExiste = Object.values(jogadores).find(j => j.usuario === usuario);
+  if (jaExiste || usuario === 'mestre') { showToast('Usuário já existe!'); return; }
+
+  // Usa o nome como chave (sem acentos pra evitar problema no Firebase)
+  const key = usuario.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '_');
+  await set(ref(db, 'usuarios/jogadores/' + key), { usuario, senha });
+
+  document.getElementById('novoUsuario').value = '';
+  document.getElementById('novaSenha').value = '';
+  showToast('Jogador adicionado!');
+};
+
+// Escuta mudanças em tempo real
+onValue(ref(db, 'usuarios/mestre'), snap => {
+  if (snap.exists()) renderMestre(snap.val());
+});
+onValue(ref(db, 'usuarios/jogadores'), snap => {
+  renderJogadores(snap.exists() ? snap.val() : {});
+});
+</script>
+</body>
+</html>

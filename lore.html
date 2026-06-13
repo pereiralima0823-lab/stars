@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lore — RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #101010;
+    --bg2: #0c1008;
+    --bg3: #0b1007;
+    --border: #253018;
+    --border2: #3a6010;
+    --gold: #7ac94c;
+    --gold2: #1e3510;
+    --gold-dim: #6db844;
+    --text: #ffffff;
+    --text2: #4a7a19;
+    --text3: #ffffff;
+    --red: #4a7020;
+    --red2: #70a040;
+    --radius: 6px;
+  }
+
+  body {
+    font-family: 'Crimson Text', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+  input, textarea {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold-dim);
+    background: var(--bg3);
+  }
+
+  body.readonly input,
+  body.readonly textarea,
+  body.readonly [contenteditable] {
+    opacity: 0.85;
+    background: var(--bg);
+    border-color: var(--border);
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  body.readonly [contenteditable] {
+    pointer-events: auto;
+  }
+  body.readonly .btn-add,
+  body.readonly .btn-danger,
+  body.readonly #toolbar,
+  body.readonly .save-btn,
+  body.readonly .new-btn {
+    display: none !important;
+  }
+  .readonly-badge {
+    display: none;
+    background: #1a2a0a;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+  }
+  body.readonly .readonly-badge { display: inline-block; }
+
+  button {
+    font-family: 'Crimson Text', Georgia, serif;
+    cursor: pointer;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    padding: 7px 14px;
+    font-size: 14px;
+    transition: all 0.18s;
+  }
+  button:hover { background: var(--bg3); border-color: var(--gold-dim); }
+  button:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--bg3);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: #182510; color: var(--gold2); border-color: var(--gold); }
+  .btn-icon {
+    padding: 5px 9px; font-size: 15px; min-width: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-danger { color: var(--red2); border-color: transparent; }
+  .btn-danger:hover { background: rgba(70,112,32,0.15); border-color: var(--red); color: #90c060; }
+  .btn-add {
+    border-style: dashed; border-color: var(--border2);
+    color: var(--text3); font-size: 13px; width: 100%; padding: 6px; margin-top: 4px;
+  }
+  .btn-add:hover { color: var(--gold); border-color: var(--gold-dim); }
+  .btn-logout {
+    background: transparent; border-color: var(--border);
+    color: var(--text3); font-size: 12px; padding: 5px 10px;
+  }
+  .btn-logout:hover { color: var(--red2); border-color: var(--red); background: rgba(70,112,32,0.1); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* HOME */
+  .home-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 10px; flex-wrap: wrap;
+  }
+  .home-title {
+    font-family: 'Cinzel', serif; font-size: 20px;
+    color: var(--gold); letter-spacing: 1px;
+  }
+  .home-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .doc-list { display: flex; flex-direction: column; gap: 8px; }
+  .doc-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+  .doc-item:hover { border-color: var(--border2); }
+  .doc-item-left { display: flex; align-items: center; gap: 12px; }
+  .doc-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .doc-name { font-size: 16px; font-weight: 600; color: var(--text); }
+  .doc-meta { font-size: 13px; color: var(--text3); margin-top: 2px; }
+  .doc-actions { display: flex; gap: 6px; }
+
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text3); font-style: italic; font-size: 15px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 0.75rem; opacity: 0.3; }
+
+  /* EDITOR */
+  .editor-wrap { padding: 1.25rem; max-width: 750px; margin: 0 auto; }
+  .editor-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem; padding-bottom: 0.875rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-title { font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold); letter-spacing: 0.5px; }
+
+  .page-dots { display: flex; gap: 5px; margin-left: auto; }
+  .page-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); border: 1px solid var(--border2); transition: all 0.2s;
+  }
+  .page-dot.active { background: var(--gold-dim); border-color: var(--gold); }
+
+  /* Doc title input */
+  .doc-title-input {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 6px 0;
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+  }
+  .doc-title-input:focus {
+    outline: none;
+    border-bottom-color: var(--gold-dim);
+    background: transparent;
+  }
+
+  /* Toolbar */
+  #toolbar {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin-bottom: 8px; padding: 6px 8px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .tool-btn {
+    padding: 4px 8px; font-size: 13px; min-width: 28px;
+    border-color: transparent; color: var(--text3);
+    font-family: 'Crimson Text', Georgia, serif;
+  }
+  .tool-btn:hover { background: var(--bg3); border-color: var(--border2); color: var(--gold); }
+  .tool-sep { width: 1px; background: var(--border); margin: 2px 4px; }
+
+  /* Rich text area */
+  .rich-editor {
+    min-height: 280px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .rich-editor:focus { border-color: var(--gold-dim); }
+  .rich-editor h1, .rich-editor h2, .rich-editor h3 {
+    font-family: 'Cinzel', serif; color: var(--gold); margin: 10px 0 6px;
+  }
+  .rich-editor b, .rich-editor strong { color: var(--gold-dim); }
+
+  /* Section divider */
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 14px 0 10px; color: var(--gold-dim);
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.8px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3);
+    letter-spacing: 0.7px; text-align: left; padding: 6px 8px;
+    border-bottom: 1px solid var(--border); background: var(--bg2);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 3px 4px; }
+  tbody td input {
+    border: none; background: transparent; font-size: 14px; padding: 5px 6px; border-radius: 4px;
+  }
+  tbody td input:focus { background: var(--bg3); border: 1px solid var(--border2); }
+  tbody td:last-child { width: 36px; text-align: center; }
+
+  .nav-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border);
+  }
+
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg3); border: 1px solid var(--gold-dim);
+    color: var(--gold); font-family: 'Cinzel', serif;
+    font-size: 13px; letter-spacing: 0.5px;
+    padding: 10px 18px; border-radius: var(--radius);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999;
+  }
+
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; color: var(--gold-dim);
+    font-size: 14px; letter-spacing: 1px; z-index: 9998;
+  }
+
+  @media (max-width: 500px) {
+    .home-title { font-size: 17px; }
+    .doc-title-input { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">Carregando lore...</div>
+
+<!-- HOME -->
+<div id="home" class="screen">
+  <div style="max-width:750px;margin:0 auto;padding:1.5rem">
+    <div class="home-header">
+      <div class="home-title">📖 Lore</div>
+      <div class="home-actions">
+        <span class="readonly-badge">👁 Somente leitura</span>
+        <button class="btn-primary new-btn" onclick="addDoc()">+ Novo Documento</button>
+        <button class="btn-logout" onclick="window.location.href='index.html'">← Voltar</button>
+      </div>
+    </div>
+    <div class="doc-list" id="docList"></div>
+    <div class="empty-state" id="emptyMsg">
+      <div class="empty-icon">📜</div>
+      Nenhum documento de lore ainda.<br>
+      <span id="emptyHint"></span>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR: página 1 — texto -->
+<div id="page1" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Lore — Texto</span>
+      <span class="readonly-badge" style="margin-left:8px">👁 Leitura</span>
+      <div class="page-dots">
+        <div class="page-dot active"></div><div class="page-dot"></div>
+      </div>
+    </div>
+
+    <input type="text" class="doc-title-input" id="f_titulo" placeholder="Nome do personagem / Título">
+
+    <div id="toolbar">
+      <button class="tool-btn" onclick="fmt('bold')" title="Negrito"><b>N</b></button>
+      <button class="tool-btn" onclick="fmt('italic')" title="Itálico"><i>I</i></button>
+      <button class="tool-btn" onclick="fmt('underline')" title="Sublinhado"><u>S</u></u></button>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="fmtBlock('h2')" title="Título">T1</button>
+      <button class="tool-btn" onclick="fmtBlock('h3')" title="Subtítulo">T2</button>
+      <button class="tool-btn" onclick="fmtBlock('p')" title="Parágrafo">¶</button>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="fmt('insertUnorderedList')" title="Lista">• Lista</button>
+    </div>
+
+    <div class="rich-editor" id="richEditor" contenteditable="true" spellcheck="false"></div>
+
+    <div class="nav-footer">
+      <span></span>
+      <button class="btn-primary" onclick="goPage(2)">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR: página 2 — tabela -->
+<div id="page2" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Lore — Tabela</span>
+      <span class="readonly-badge" style="margin-left:8px">👁 Leitura</span>
+      <div class="page-dots">
+        <div class="page-dot"></div><div class="page-dot active"></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:35%">Campo</th><th style="width:50%">Valor</th><th></th></tr></thead>
+        <tbody id="tabelaBody"></tbody>
+      </table>
+    </div>
+    <button class="btn-add" onclick="addLinhaTabela()">+ Adicionar linha</button>
+
+    <div class="nav-footer">
+      <button onclick="goPage(1)">← Anterior</button>
+      <button class="btn-primary save-btn" onclick="salvarDoc()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEiRmGP4wGrfDwbbIadvrt1Ik56ecbKYk",
+  authDomain: "path-of-stars.firebaseapp.com",
+  databaseURL: "https://path-of-stars-default-rtdb.firebaseio.com",
+  projectId: "path-of-stars",
+  storageBucket: "path-of-stars.firebasestorage.app",
+  messagingSenderId: "565088659888",
+  appId: "1:565088659888:web:8ee544001aee376e9f0e75",
+  measurementId: "G-X6LQT2TN7Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const logado = sessionStorage.getItem("logado");
+const tipo   = sessionStorage.getItem("tipo");
+if (!logado) window.location.href = "login.html";
+
+const isMestre = tipo === "mestre";
+if (!isMestre) {
+  document.body.classList.add("readonly");
+}
+
+function applyReadonly() {
+  if (!isMestre) {
+    document.querySelectorAll('input, textarea').forEach(el => {
+      el.setAttribute('readonly', true);
+      el.setAttribute('tabindex', '-1');
+    });
+    // Make rich editor non-editable but still scrollable/selectable
+    const editor = document.getElementById('richEditor');
+    if (editor) {
+      editor.contentEditable = 'false';
+      editor.style.cursor = 'text';
+      editor.style.userSelect = 'text';
+      editor.style.webkitUserSelect = 'text';
+    }
+  }
+}
+
+document.getElementById("emptyHint").textContent = isMestre
+  ? 'Clique em "Novo Documento" para começar.'
+  : 'O mestre ainda não criou nenhum documento.';
+
+let docs = [];
+let editingId = null;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goHome() { editingId = null; showScreen('home'); renderHome(); }
+function goPage(n) { showScreen('page' + n); }
+function genId() { return '_' + Math.random().toString(36).slice(2, 9); }
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window.goHome = goHome;
+window.goPage = goPage;
+
+// Toolbar formatting
+function fmt(cmd) { document.execCommand(cmd, false, null); }
+function fmtBlock(tag) { document.execCommand('formatBlock', false, tag); }
+window.fmt = fmt;
+window.fmtBlock = fmtBlock;
+
+async function carregarTudo() {
+  const snap = await get(ref(db, 'lore'));
+  docs = snap.exists() ? Object.values(snap.val()) : [];
+}
+
+onValue(ref(db, 'lore'), snap => {
+  docs = snap.exists() ? Object.values(snap.val()) : [];
+  if (document.getElementById('home').classList.contains('active')) renderHome();
+});
+
+function addDoc() {
+  if (!isMestre) return;
+  editingId = genId();
+  const d = { id: editingId, titulo: 'Novo Documento', conteudo: '', tabela: [] };
+  docs.push(d);
+  loadDocToForm(d);
+  showScreen('page1');
+}
+window.addDoc = addDoc;
+
+function editDoc(id) {
+  editingId = id;
+  const d = docs.find(x => x.id === id);
+  if (!d) return;
+  loadDocToForm(d);
+  showScreen('page1');
+}
+window.editDoc = editDoc;
+
+async function deleteDoc(id) {
+  if (!isMestre) return;
+  if (!confirm('Excluir este documento?')) return;
+  docs = docs.filter(x => x.id !== id);
+  await remove(ref(db, 'lore/' + id));
+  renderHome();
+}
+window.deleteDoc = deleteDoc;
+
+function loadDocToForm(d) {
+  document.getElementById('f_titulo').value = d.titulo || '';
+  document.getElementById('richEditor').innerHTML = d.conteudo || '';
+  renderTabela(d.tabela || []);
+  applyReadonly();
+}
+
+function renderTabela(rows) {
+  const tbody = document.getElementById('tabelaBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${esc(r.campo||'')}" placeholder="Campo"></td>
+      <td><input type="text" value="${esc(r.valor||'')}" placeholder="Valor"></td>
+      <td><button class="btn-icon btn-danger" onclick="this.closest('tr').remove()">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addLinhaTabela() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Campo"></td>
+    <td><input type="text" placeholder="Valor"></td>
+    <td><button class="btn-icon btn-danger" onclick="this.closest('tr').remove()">×</button></td>`;
+  document.getElementById('tabelaBody').appendChild(tr);
+}
+window.addLinhaTabela = addLinhaTabela;
+
+async function salvarDoc() {
+  if (!isMestre) return;
+  const tabela = [...document.querySelectorAll('#tabelaBody tr')].map(tr => {
+    const ins = tr.querySelectorAll('input');
+    return { campo: ins[0]?.value||'', valor: ins[1]?.value||'' };
+  });
+  const data = {
+    id: editingId,
+    titulo: document.getElementById('f_titulo').value || 'Sem título',
+    conteudo: document.getElementById('richEditor').innerHTML,
+    tabela
+  };
+  const idx = docs.findIndex(x => x.id === editingId);
+  if (idx >= 0) docs[idx] = data;
+  await set(ref(db, 'lore/' + data.id), data);
+  showToast('Documento salvo!');
+  goHome();
+}
+window.salvarDoc = salvarDoc;
+
+function renderHome() {
+  const list  = document.getElementById('docList');
+  const empty = document.getElementById('emptyMsg');
+  if (!docs.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = docs.map(d => {
+    const viewBtn = isMestre
+      ? `<button class="btn-icon" onclick="editDoc('${d.id}')" title="Editar">✏️</button>`
+      : `<button class="btn-icon" onclick="editDoc('${d.id}')" title="Ver">👁</button>`;
+    const delBtn = isMestre
+      ? `<button class="btn-icon btn-danger" onclick="deleteDoc('${d.id}')" title="Excluir">🗑</button>`
+      : '';
+    // Strip HTML for preview
+    const div = document.createElement('div');
+    div.innerHTML = d.conteudo || '';
+    const preview = (div.textContent || '').slice(0, 60).trim();
+    return `<div class="doc-item">
+      <div class="doc-item-left">
+        <div class="doc-icon">📜</div>
+        <div>
+          <div class="doc-name">${esc(d.titulo)}</div>
+          <div class="doc-meta">${preview ? esc(preview) + '…' : 'Sem conteúdo'}</div>
+        </div>
+      </div>
+      <div class="doc-actions">${viewBtn}${delBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 2200);
+}
+
+carregarTudo().then(() => {
+  document.getElementById('loadingOverlay').style.display = 'none';
+  showScreen('home');
+  renderHome();
+});
+</script>
+</body>
+</html>

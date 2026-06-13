@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPCs — RPG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #101010;
+    --bg2: #0c0c15;
+    --bg3: #0b0b16;
+    --border: #202038;
+    --border2: #030368;
+    --gold: #4c4cc9;
+    --gold2: #121235;
+    --gold-dim: #4444db;
+    --text: #ffffff;
+    --text2: #191980;
+    --text3: #ffffff;
+    --red: #20208b;
+    --red2: #4040c0;
+    --radius: 6px;
+  }
+
+  body {
+    font-family: 'Crimson Text', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+  input, textarea {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold-dim);
+    background: var(--bg3);
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
+
+  body.readonly input,
+  body.readonly textarea {
+    opacity: 0.85;
+    background: var(--bg);
+    border-color: var(--border);
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  body.readonly .btn-add,
+  body.readonly .btn-danger,
+  body.readonly .perk-remove,
+  body.readonly #addExtraBtn,
+  body.readonly .new-btn {
+    display: none !important;
+  }
+  .readonly-badge {
+    display: none;
+    background: #0a1a2a;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+  }
+  body.readonly .readonly-badge { display: inline-block; }
+
+  button {
+    font-family: 'Crimson Text', Georgia, serif;
+    cursor: pointer;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    padding: 7px 14px;
+    font-size: 14px;
+    transition: all 0.18s;
+  }
+  button:hover { background: var(--bg3); color: var(--gold2); border-color: var(--gold-dim); }
+  button:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--bg3);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: #18182a; color: var(--gold2); border-color: var(--gold); }
+
+  .btn-icon {
+    padding: 5px 9px;
+    font-size: 15px;
+    min-width: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-danger { color: var(--red2); border-color: transparent; }
+  .btn-danger:hover { background: rgba(32,32,139,0.15); border-color: var(--red); color: #6060e0; }
+  .btn-add {
+    border-style: dashed;
+    border-color: var(--border2);
+    color: var(--text3);
+    font-size: 13px;
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+  }
+  .btn-add:hover { color: var(--gold); border-color: var(--gold-dim); }
+  .btn-logout {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text3);
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  .btn-logout:hover { color: var(--red2); border-color: var(--red); background: rgba(32,32,139,0.1); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .home-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .home-title {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .home-actions { display: flex; gap: 8px; align-items: center; }
+
+  .ficha-list { display: flex; flex-direction: column; gap: 8px; }
+  .ficha-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.2s;
+  }
+  .ficha-item:hover { border-color: var(--border2); }
+  .ficha-item-left { display: flex; align-items: center; gap: 12px; }
+  .ficha-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--gold-dim);
+    flex-shrink: 0;
+  }
+  .ficha-name { font-size: 16px; font-weight: 600; color: var(--text); }
+  .ficha-meta { font-size: 13px; color: var(--text3); margin-top: 2px; }
+  .ficha-actions { display: flex; gap: 6px; }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text3);
+    font-style: italic;
+    font-size: 15px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 0.75rem; opacity: 0.3; }
+
+  .editor-wrap { padding: 1.25rem; max-width: 700px; margin: 0 auto; }
+  .editor-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-title { font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold); letter-spacing: 0.5px; }
+  .page-dots { display: flex; gap: 5px; margin-left: auto; }
+  .page-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 1px solid var(--border2);
+    transition: all 0.2s;
+  }
+  .page-dot.active { background: var(--gold-dim); border-color: var(--gold); }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .full-width { grid-column: 1 / -1; }
+
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 14px 0 10px;
+    color: var(--gold-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 11px; letter-spacing: 0.8px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .vida-stack { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .extra-fields { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .extra-row { display: flex; gap: 6px; align-items: center; }
+  .extra-row input { flex: 1; }
+
+  .nav-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1.25rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-section {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+  }
+  .card-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .card-section-title { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold-dim); letter-spacing: 0.6px; }
+  .perk-list { display: flex; flex-direction: column; gap: 6px; }
+  .perk-item { display: flex; gap: 6px; align-items: center; }
+  .perk-item input { flex: 1; }
+  .perk-remove {
+    padding: 3px 7px; color: var(--red2);
+    background: transparent; border: 1px solid transparent;
+    border-radius: var(--radius); font-size: 16px; line-height: 1;
+  }
+  .perk-remove:hover { background: rgba(32,32,139,0.15); border-color: var(--red); }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3);
+    letter-spacing: 0.7px; text-align: left; padding: 6px 8px;
+    border-bottom: 1px solid var(--border); background: var(--bg2);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 3px 4px; }
+  tbody td input {
+    border: none; background: transparent; font-size: 14px; padding: 5px 6px; border-radius: 4px;
+  }
+  tbody td input:focus { background: var(--bg3); border: 1px solid var(--border2); }
+  tbody td:last-child { width: 36px; text-align: center; }
+
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg3); border: 1px solid var(--gold-dim);
+    color: var(--gold); font-family: 'Cinzel', serif;
+    font-size: 13px; letter-spacing: 0.5px;
+    padding: 10px 18px; border-radius: var(--radius);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s; z-index: 9999;
+  }
+
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; color: var(--gold-dim);
+    font-size: 14px; letter-spacing: 1px;
+    z-index: 9998;
+  }
+
+  @media (max-width: 500px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .home-title { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">Carregando NPCs...</div>
+
+<!-- HOME -->
+<div id="home" class="screen">
+  <div style="max-width:700px;margin:0 auto;padding:1.5rem">
+    <div class="home-header">
+      <div class="home-title">👥 NPCs</div>
+      <div class="home-actions">
+        <span class="readonly-badge">👁 Somente leitura</span>
+        <button class="btn-primary new-btn" onclick="addFicha()">+ Novo NPC</button>
+        <button class="btn-logout" onclick="window.location.href='index.html'">← Voltar</button>
+      </div>
+    </div>
+    <div class="ficha-list" id="fichaList"></div>
+    <div class="empty-state" id="emptyMsg">
+      <div class="empty-icon">👤</div>
+      Nenhum NPC ainda.<br>Clique em "Novo NPC" para começar.
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 1 -->
+<div id="page1" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Dados do NPC</span>
+      <div class="page-dots">
+        <div class="page-dot active"></div><div class="page-dot"></div>
+        <div class="page-dot"></div><div class="page-dot"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field-group full-width"><label class="field-label">Nome</label><input type="text" id="f_nome" placeholder="Nome do NPC"></div>
+    </div>
+    <div class="grid-4">
+      <div class="field-group"><label class="field-label">LVL</label><input type="number" id="f_lvl" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Força</label><input type="number" id="f_forca" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Resistência</label><input type="number" id="f_resist" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Agilidade</label><input type="number" id="f_agilidade" placeholder="0"></div>
+    </div>
+    <div class="grid-3">
+      <div class="field-group"><label class="field-label">Velocidade</label><input type="number" id="f_velocidade" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">QI</label><input type="number" id="f_qi" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Stamina</label><input type="number" id="f_stamina" placeholder="0"></div>
+    </div>
+
+    <div class="section-divider">Vida e Energia</div>
+    <div class="vida-stack">
+      <input type="text" id="f_vida_txt1" placeholder="Vida — linha 1">
+      <input type="text" id="f_vida_txt2" placeholder="Energia — linha 2">
+    </div>
+    <div class="grid-2">
+      <div class="field-group"><label class="field-label">Sanidade</label><input type="text" id="f_sanidade"></div>
+      <div class="field-group"><label class="field-label">Modificador</label><input type="text" id="f_modificador"></div>
+    </div>
+    <div class="grid-4">
+      <div class="field-group"><label class="field-label">CA</label><input type="text" id="f_ca"></div>
+      <div class="field-group"><label class="field-label">Vida (nº)</label><input type="number" id="f_vida_num" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Combate</label><input type="number" id="f_combate" placeholder="0"></div>
+      <div class="field-group"><label class="field-label">Caminho</label><input type="text" id="f_caminho"></div>
+    </div>
+
+    <div class="section-divider">Campos Extras</div>
+    <div id="extraFields" class="extra-fields"></div>
+    <button class="btn-add" id="addExtraBtn" onclick="addExtraField()">+ Adicionar campo</button>
+
+    <div class="nav-footer">
+      <span></span>
+      <button class="btn-primary" onclick="goPage(2)">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div id="page2" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Perícias e Classes</span>
+      <div class="page-dots">
+        <div class="page-dot"></div><div class="page-dot active"></div>
+        <div class="page-dot"></div><div class="page-dot"></div>
+      </div>
+    </div>
+    <div class="card-section">
+      <div class="card-section-title" style="margin-bottom:10px">Perícias e Classes</div>
+      <div class="grid-2">
+        <div class="field-group"><label class="field-label">Classe</label><input type="text" id="f_classe"></div>
+        <div class="field-group"><label class="field-label">Classe 2</label><input type="text" id="f_classe2"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field-group"><label class="field-label">Perícia</label><input type="text" id="f_pericia"></div>
+        <div class="field-group"><label class="field-label">Raça</label><input type="text" id="f_raca"></div>
+      </div>
+    </div>
+    <div class="card-section">
+      <div class="card-section-header">
+        <span class="card-section-title">Perícias Especiais</span>
+        <button class="btn-icon btn-add" style="width:auto;margin:0" onclick="addPerk('especiais')">+</button>
+      </div>
+      <div class="perk-list" id="especiais"></div>
+    </div>
+    <div class="card-section">
+      <div class="card-section-header">
+        <span class="card-section-title">Perícias Supremas</span>
+        <button class="btn-icon btn-add" style="width:auto;margin:0" onclick="addPerk('supremas')">+</button>
+      </div>
+      <div class="perk-list" id="supremas"></div>
+    </div>
+    <div class="nav-footer">
+      <button onclick="goPage(1)">← Anterior</button>
+      <button class="btn-primary" onclick="goPage(3)">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div id="page3" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Itens</span>
+      <div class="page-dots">
+        <div class="page-dot"></div><div class="page-dot"></div>
+        <div class="page-dot active"></div><div class="page-dot"></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:35%">Nome</th><th style="width:15%">Qtd</th><th style="width:35%">Descrição</th><th></th></tr></thead>
+        <tbody id="itensBody"></tbody>
+      </table>
+    </div>
+    <button class="btn-add" onclick="addItem()">+ Adicionar item</button>
+    <div class="nav-footer">
+      <button onclick="goPage(2)">← Anterior</button>
+      <button class="btn-primary" onclick="goPage(4)">Próximo →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div id="page4" class="screen">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <button class="btn-icon" onclick="goHome()">←</button>
+      <span class="editor-title">Habilidades</span>
+      <div class="page-dots">
+        <div class="page-dot"></div><div class="page-dot"></div>
+        <div class="page-dot"></div><div class="page-dot active"></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:30%">Nome</th><th style="width:20%">Tipo</th><th style="width:35%">Efeito</th><th></th></tr></thead>
+        <tbody id="habilidadesBody"></tbody>
+      </table>
+    </div>
+    <button class="btn-add" onclick="addHabilidade()">+ Adicionar habilidade</button>
+    <div class="nav-footer">
+      <button onclick="goPage(3)">← Anterior</button>
+      <button class="btn-primary" onclick="salvarFicha()">💾 Salvar NPC</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEiRmGP4wGrfDwbbIadvrt1Ik56ecbKYk",
+  authDomain: "path-of-stars.firebaseapp.com",
+  databaseURL: "https://path-of-stars-default-rtdb.firebaseio.com",
+  projectId: "path-of-stars",
+  storageBucket: "path-of-stars.firebasestorage.app",
+  messagingSenderId: "565088659888",
+  appId: "1:565088659888:web:8ee544001aee376e9f0e75",
+  measurementId: "G-X6LQT2TN7Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const logado = sessionStorage.getItem("logado");
+const tipo   = sessionStorage.getItem("tipo");
+
+if (!logado) window.location.href = "login.html";
+
+const isMestre = tipo === "mestre";
+
+if (!isMestre) {
+  document.body.classList.add("readonly");
+  document.querySelector('.btn-primary.new-btn') && (document.querySelector('.btn-primary.new-btn').style.display = 'none');
+}
+
+function applyReadonly() {
+  if (!isMestre) {
+    document.querySelectorAll('input, textarea').forEach(el => {
+      el.setAttribute('readonly', true);
+      el.setAttribute('tabindex', '-1');
+    });
+  }
+}
+
+let fichas = [];
+let editingId = null;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goHome() { editingId = null; showScreen('home'); renderHome(); }
+function goPage(n) { showScreen('page' + n); }
+function genId() { return '_' + Math.random().toString(36).slice(2, 9); }
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window.goHome = goHome;
+window.goPage = goPage;
+
+async function carregarTudo() {
+  const snap = await get(ref(db, 'npcs'));
+  fichas = snap.exists() ? Object.values(snap.val()) : [];
+}
+
+onValue(ref(db, 'npcs'), snap => {
+  fichas = snap.exists() ? Object.values(snap.val()) : [];
+  if (document.getElementById('home').classList.contains('active')) renderHome();
+});
+
+function addFicha() {
+  editingId = genId();
+  const f = {
+    id: editingId, nome: 'Novo NPC', lvl: 1,
+    forca: 0, resist: 0, agilidade: 0, velocidade: 0,
+    vida_txt1: '', vida_txt2: '', sanidade: '', modificador: '',
+    qi: 0, ca: '', vida_num: 0, combate: 0, caminho: '', stamina: 0,
+    extraFields: [], classe: '', classe2: '', pericia: '', raca: '',
+    especiais: [], supremas: [], itens: [], habilidades: []
+  };
+  fichas.push(f);
+  loadFichaToForm(f);
+  showScreen('page1');
+}
+window.addFicha = addFicha;
+
+function editFicha(id) {
+  editingId = id;
+  const f = fichas.find(x => x.id === id);
+  if (!f) return;
+  loadFichaToForm(f);
+  showScreen('page1');
+}
+window.editFicha = editFicha;
+
+async function deleteFicha(id) {
+  if (!confirm('Excluir este NPC?')) return;
+  fichas = fichas.filter(x => x.id !== id);
+  await remove(ref(db, 'npcs/' + id));
+  renderHome();
+}
+window.deleteFicha = deleteFicha;
+
+function loadFichaToForm(f) {
+  const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+  v('f_nome', f.nome); v('f_lvl', f.lvl); v('f_forca', f.forca);
+  v('f_resist', f.resist); v('f_agilidade', f.agilidade); v('f_velocidade', f.velocidade);
+  v('f_vida_txt1', f.vida_txt1); v('f_vida_txt2', f.vida_txt2);
+  v('f_sanidade', f.sanidade); v('f_modificador', f.modificador);
+  v('f_qi', f.qi); v('f_ca', f.ca); v('f_vida_num', f.vida_num);
+  v('f_combate', f.combate); v('f_caminho', f.caminho); v('f_stamina', f.stamina);
+  v('f_classe', f.classe); v('f_classe2', f.classe2);
+  v('f_pericia', f.pericia); v('f_raca', f.raca);
+  const ef = document.getElementById('extraFields');
+  ef.innerHTML = '';
+  (f.extraFields || []).forEach(r => addExtraField(r));
+  renderPerks('especiais', f.especiais || []);
+  renderPerks('supremas', f.supremas || []);
+  renderTableRows('itensBody', f.itens || [], ['nome','qtd','desc'], ['Nome','1','Descrição']);
+  renderTableRows('habilidadesBody', f.habilidades || [], ['nome','tipo','efeito'], ['Nome','Tipo','Efeito']);
+  applyReadonly();
+}
+
+function readFichaFromForm() {
+  const v = id => (document.getElementById(id) || {}).value || '';
+  const extraFields = [];
+  document.querySelectorAll('#extraFields .extra-row').forEach(row => {
+    extraFields.push([...row.querySelectorAll('input')].map(i => i.value));
+  });
+  const especiais = [...document.querySelectorAll('#especiais input')].map(i => i.value);
+  const supremas  = [...document.querySelectorAll('#supremas input')].map(i => i.value);
+  const itens = [...document.querySelectorAll('#itensBody tr')].map(tr => {
+    const ins = tr.querySelectorAll('input');
+    return { nome: ins[0]?.value||'', qtd: ins[1]?.value||'', desc: ins[2]?.value||'' };
+  });
+  const habilidades = [...document.querySelectorAll('#habilidadesBody tr')].map(tr => {
+    const ins = tr.querySelectorAll('input');
+    return { nome: ins[0]?.value||'', tipo: ins[1]?.value||'', efeito: ins[2]?.value||'' };
+  });
+  return {
+    id: editingId,
+    nome: v('f_nome')||'Sem nome', lvl: +v('f_lvl'), forca: +v('f_forca'),
+    resist: +v('f_resist'), agilidade: +v('f_agilidade'), velocidade: +v('f_velocidade'),
+    vida_txt1: v('f_vida_txt1'), vida_txt2: v('f_vida_txt2'),
+    sanidade: v('f_sanidade'), modificador: v('f_modificador'),
+    qi: +v('f_qi'), ca: v('f_ca'), vida_num: +v('f_vida_num'),
+    combate: +v('f_combate'), caminho: v('f_caminho'), stamina: +v('f_stamina'),
+    extraFields, classe: v('f_classe'), classe2: v('f_classe2'),
+    pericia: v('f_pericia'), raca: v('f_raca'),
+    especiais, supremas, itens, habilidades
+  };
+}
+
+async function salvarFicha() {
+  const data = readFichaFromForm();
+  const idx = fichas.findIndex(x => x.id === editingId);
+  if (idx >= 0) fichas[idx] = data;
+  await set(ref(db, 'npcs/' + data.id), data);
+  showToast('NPC salvo!');
+  goHome();
+}
+window.salvarFicha = salvarFicha;
+
+function renderHome() {
+  const list  = document.getElementById('fichaList');
+  const empty = document.getElementById('emptyMsg');
+  if (!fichas.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = fichas.map(f => {
+    const initials = (f.nome||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const editBtn = isMestre
+      ? `<button class="btn-icon" onclick="editFicha('${f.id}')" title="Editar">✏️</button>`
+      : `<button class="btn-icon" onclick="editFicha('${f.id}')" title="Ver NPC">👁</button>`;
+    const delBtn = isMestre
+      ? `<button class="btn-icon btn-danger" onclick="deleteFicha('${f.id}')" title="Excluir">🗑</button>`
+      : '';
+    return `<div class="ficha-item">
+      <div class="ficha-item-left">
+        <div class="ficha-avatar">${esc(initials)}</div>
+        <div>
+          <div class="ficha-name">${esc(f.nome)}</div>
+          <div class="ficha-meta">LVL ${f.lvl||0}${f.caminho?' · '+esc(f.caminho):''}${f.raca?' · '+esc(f.raca):''}</div>
+        </div>
+      </div>
+      <div class="ficha-actions">${editBtn}${delBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function addExtraField(vals) {
+  const row = document.createElement('div');
+  row.className = 'extra-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Campo" value="${esc(vals ? vals[0] : '')}">
+    <input type="text" placeholder="Valor" value="${esc(vals ? vals[1] : '')}">
+    <button class="btn-icon btn-danger" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById('extraFields').appendChild(row);
+}
+window.addExtraField = addExtraField;
+
+function addPerk(listId) {
+  const list = document.getElementById(listId);
+  const item = document.createElement('div');
+  item.className = 'perk-item';
+  item.innerHTML = `
+    <input type="text" placeholder="Descreva a perícia...">
+    <button class="perk-remove" onclick="this.parentElement.remove()">×</button>`;
+  list.appendChild(item);
+}
+window.addPerk = addPerk;
+
+function renderPerks(listId, vals) {
+  const list = document.getElementById(listId);
+  list.innerHTML = '';
+  vals.forEach(v => {
+    const item = document.createElement('div');
+    item.className = 'perk-item';
+    item.innerHTML = `
+      <input type="text" value="${esc(v)}" placeholder="Descreva a perícia...">
+      <button class="perk-remove" onclick="this.parentElement.remove()">×</button>`;
+    list.appendChild(item);
+  });
+}
+
+function addItem() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Nome do item"></td>
+    <td><input type="text" placeholder="1"></td>
+    <td><input type="text" placeholder="Descrição"></td>
+    <td><button class="btn-icon btn-danger" onclick="this.closest('tr').remove()">×</button></td>`;
+  document.getElementById('itensBody').appendChild(tr);
+}
+window.addItem = addItem;
+
+function addHabilidade() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="Nome"></td>
+    <td><input type="text" placeholder="Tipo"></td>
+    <td><input type="text" placeholder="Efeito / descrição"></td>
+    <td><button class="btn-icon btn-danger" onclick="this.closest('tr').remove()">×</button></td>`;
+  document.getElementById('habilidadesBody').appendChild(tr);
+}
+window.addHabilidade = addHabilidade;
+
+function renderTableRows(tbodyId, rows, keys, placeholders) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = keys.map((k,i) =>
+      `<td><input type="text" value="${esc(r[k]||'')}" placeholder="${placeholders[i]}"></td>`
+    ).join('') +
+    `<td><button class="btn-icon btn-danger" onclick="this.closest('tr').remove()">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 2200);
+}
+
+carregarTudo().then(() => {
+  document.getElementById('loadingOverlay').style.display = 'none';
+  showScreen('home');
+  renderHome();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login RPG</title>
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="login-box">
+  <div class="login-icon">⚔</div>
+  <h1>Login RPG</h1>
+  <input type="text" id="usuario" placeholder="Usuário" autocomplete="off">
+  <input type="password" id="senha" placeholder="Senha">
+  <button onclick="logar()">Entrar</button>
+  <div id="erro" class="erro"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEiRmGP4wGrfDwbbIadvrt1Ik56ecbKYk",
+  authDomain: "path-of-stars.firebaseapp.com",
+  databaseURL: "https://path-of-stars-default-rtdb.firebaseio.com",
+  projectId: "path-of-stars",
+  storageBucket: "path-of-stars.firebasestorage.app",
+  messagingSenderId: "565088659888",
+  appId: "1:565088659888:web:8ee544001aee376e9f0e75"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// Garante que os usuários padrão existam no Firebase na primeira vez
+async function garantirUsuariosPadrao() {
+  const snap = await get(ref(db, 'usuarios'));
+  if (!snap.exists()) {
+    await set(ref(db, 'usuarios'), {
+      mestre: { usuario: 'mestre', senha: 'stars--', tipo: 'mestre' },
+      jogadores: {
+        kael:    { usuario: 'kael',    senha: 'stars' },
+        yoko:    { usuario: 'yōko',   senha: 'stars' },
+        aeyer:   { usuario: 'aeyer',  senha: 'stars' },
+        revan:   { usuario: 'revan',  senha: 'stars' },
+        marlide: { usuario: 'marlide',senha: 'stars' }
+      }
+    });
+  }
+}
+
+async function logar() {
+  const usuario = document.getElementById("usuario").value.toLowerCase().trim();
+  const senha   = document.getElementById("senha").value.trim();
+  const erro    = document.getElementById("erro");
+  erro.textContent = "Verificando...";
+
+  try {
+    const snap = await get(ref(db, 'usuarios'));
+    if (!snap.exists()) { erro.textContent = "Erro ao carregar usuários."; return; }
+    const data = snap.val();
+
+    // Checa mestre
+    if (usuario === data.mestre.usuario && senha === data.mestre.senha) {
+      sessionStorage.setItem("logado", "true");
+      sessionStorage.setItem("tipo", "mestre");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // Checa jogadores
+    const jogadores = data.jogadores || {};
+    const encontrado = Object.values(jogadores).find(j => j.usuario === usuario && j.senha === senha);
+    if (encontrado) {
+      sessionStorage.setItem("logado", "true");
+      sessionStorage.setItem("tipo", "jogador");
+      sessionStorage.setItem("usuario", usuario);
+      window.location.href = "index.html";
+    } else {
+      erro.textContent = "Usuário ou senha incorretos!";
+      document.getElementById("senha").value = "";
+    }
+  } catch(e) {
+    erro.textContent = "Erro de conexão. Tente novamente.";
+  }
+}
+
+window.logar = logar;
+document.addEventListener("keydown", e => { if (e.key === "Enter") logar(); });
+
+garantirUsuariosPadrao();
+</script>
+</body>
+</html>
