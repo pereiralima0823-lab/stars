@@ -58,6 +58,22 @@
   input[type="number"] { -moz-appearance: textfield; }
   input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
 
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius);
+    padding: 20px; width: 100%; max-width: 360px;
+  }
+  .modal-title { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold); margin-bottom: 14px; letter-spacing: 0.5px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+  select { font-family: 'Crimson Text', Georgia, serif; font-size: 15px; color: var(--text); background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; width: 100%; }
+  select:focus { outline: none; border-color: var(--gold-dim); }
+  select option { background: #1a1a2a; }
+  .field-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
   body.readonly input,
   body.readonly textarea {
     opacity: 0.85;
@@ -313,21 +329,39 @@
 
 <div class="loading-overlay" id="loadingOverlay">Carregando NPCs...</div>
 
+<!-- MODAL: escolher grupo para promover -->
+<div class="modal-overlay" id="modalPromover">
+  <div class="modal-box">
+    <div class="modal-title">Mover para NPCs</div>
+    <p style="font-size:14px;color:var(--text3);margin-bottom:12px">
+      Escolha o grupo onde <strong id="nomeNpcPromover"></strong> vai aparecer para os jogadores.
+    </p>
+    <div>
+      <label class="field-label">Grupo de NPCs</label>
+      <select id="selectGrupoPromover"></select>
+    </div>
+    <div class="modal-actions">
+      <button onclick="fecharModalPromover()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmarPromover()">👥 Mover</button>
+    </div>
+  </div>
+</div>
+
 <!-- HOME -->
 <div id="home" class="screen">
   <div style="max-width:700px;margin:0 auto;padding:1.5rem">
     <div class="home-header">
-      <div class="home-title">🔒 Fichas Secretas</div>
+      <div class="home-title">🔒 Segredos</div>
       <div class="home-actions">
         <span class="readonly-badge">👁 Somente leitura</span>
-        <button class="btn-primary new-btn" onclick="addFicha()">+ Nova Ficha Secreta</button>
+        <button class="btn-primary new-btn" onclick="addFicha()">+ Novo Segredo</button>
         <button class="btn-logout" onclick="window.location.href='index.html'">← Voltar</button>
       </div>
     </div>
     <div class="ficha-list" id="fichaList"></div>
     <div class="empty-state" id="emptyMsg">
       <div class="empty-icon">🔒</div>
-      Nenhuma Ficha ainda.<br>Clique em "Nova Ficha Secreta" para começar.
+      Nenhum segredo ainda.<br>Clique em "Novo Segredo" para começar.
     </div>
   </div>
 </div>
@@ -337,7 +371,7 @@
   <div class="editor-wrap">
     <div class="editor-header">
       <button class="btn-icon" onclick="goHome()">←</button>
-      <span class="editor-title">Dados da Ficha</span>
+      <span class="editor-title">Dados do Segredo</span>
       <div class="page-dots">
         <div class="page-dot active"></div><div class="page-dot"></div>
         <div class="page-dot"></div><div class="page-dot"></div>
@@ -345,7 +379,7 @@
     </div>
 
     <div class="grid-2">
-      <div class="field-group full-width"><label class="field-label">Nome</label><input type="text" id="f_nome" placeholder="Nome do Vilão / Secreta"></div>
+      <div class="field-group full-width"><label class="field-label">Nome</label><input type="text" id="f_nome" placeholder="Nome do Vilão / Segredo"></div>
     </div>
     <div class="grid-4">
       <div class="field-group"><label class="field-label">LVL</label><input type="number" id="f_lvl" placeholder="0"></div>
@@ -634,18 +668,46 @@ window.salvarFicha = salvarFicha;
 async function promoverParaNpcs(id) {
   const f = fichas.find(x => x.id === id);
   if (!f) return;
-  if (!confirm(`Mover "${f.nome}" para NPCs? Ele vai aparecer para os jogadores.`)) return;
-  // Copia para npcs com novo id para não conflitar
-  const novoId = '_' + Math.random().toString(36).slice(2, 9);
-  const copia = { ...f, id: novoId };
-  await set(ref(db, 'npcs/' + novoId), copia);
-  // Remove dos segredos
-  fichas = fichas.filter(x => x.id !== id);
-  await remove(ref(db, 'segredos/' + id));
-  showToast(f.nome + ' movido para NPCs!');
-  renderHome();
+
+  // Busca grupos de NPCs disponíveis
+  const snapGrupos = await get(ref(db, 'npc_grupos'));
+  const grupos = snapGrupos.exists() ? snapGrupos.val() : {};
+  const grupoIds = Object.keys(grupos);
+
+  if (!grupoIds.length) {
+    showToast('Crie um grupo em NPCs primeiro!');
+    return;
+  }
+
+  // Monta select de grupos
+  const opcoes = grupoIds.map(gid => `<option value="${gid}">${grupos[gid].nome}</option>`).join('');
+  document.getElementById('selectGrupoPromover').innerHTML = opcoes;
+  document.getElementById('nomeNpcPromover').textContent = f.nome;
+  document.getElementById('modalPromover').classList.add('open');
+  window._promovendoId = id;
 }
 window.promoverParaNpcs = promoverParaNpcs;
+
+window.fecharModalPromover = () => {
+  document.getElementById('modalPromover').classList.remove('open');
+  window._promovendoId = null;
+};
+
+window.confirmarPromover = async () => {
+  const id = window._promovendoId;
+  if (!id) return;
+  const grupoId = document.getElementById('selectGrupoPromover').value;
+  const f = fichas.find(x => x.id === id);
+  if (!f) return;
+  const novoId = '_' + Math.random().toString(36).slice(2, 9);
+  const copia = { ...f, id: novoId };
+  await set(ref(db, 'npc_grupos/' + grupoId + '/npcs/' + novoId), copia);
+  fichas = fichas.filter(x => x.id !== id);
+  await remove(ref(db, 'segredos/' + id));
+  fecharModalPromover();
+  showToast(f.nome + ' movido para NPCs!');
+  renderHome();
+};
 
 function renderHome() {
   const list  = document.getElementById('fichaList');
