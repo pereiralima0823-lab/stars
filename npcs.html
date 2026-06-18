@@ -432,7 +432,7 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
 }
-function goHome() { editingId = null; editingGrupoId = null; showScreen('home'); }
+function goHome() { editingId = null; editingGrupoId = null; showScreen('home'); renderHome(); }
 function goPage(n) { showScreen('page' + n); }
 function genId() { return '_' + Math.random().toString(36).slice(2, 9); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -452,7 +452,7 @@ function applyReadonly() {
 // ── FIREBASE ──
 onValue(ref(db, 'npc_grupos'), snap => {
   grupos = snap.exists() ? snap.val() : {};
-  if (document.getElementById('home').classList.contains('active')) renderHome();
+  renderHome();
 });
 
 // Migra NPCs antigos (que estavam em /npcs) para um grupo "Geral"
@@ -836,10 +836,13 @@ document.getElementById('modalEscolherGrupo').addEventListener('click', e => { i
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('modalGrupo').classList.contains('open')) salvarGrupo(); });
 
 // ── INIT ──
-migrarNpcsAntigos().then(() => {
-  document.getElementById('loadingOverlay').style.display = 'none';
-  showScreen('home');
-});
+// Esconde overlay e mostra home imediatamente
+// onValue já vai popular os grupos quando chegar
+document.getElementById('loadingOverlay').style.display = 'none';
+showScreen('home');
+
+// Migração de NPCs antigos roda em background
+migrarNpcsAntigos();
 </script>
 </body>
 </html>
